@@ -118,7 +118,7 @@ def dqn_learing(
         if sample > eps_threshold:
             obs = torch.from_numpy(obs).type(dtype).unsqueeze(0) / 255.0
             # Use volatile = True if variable is only used in inference mode, i.e. dont save the history
-            return model(Variable(obs, volatile=True)).data.max(1)[1].view(1, 1).cpu()
+            return model(Variable(obs, volatile=True)).data.max(1)[1].view(-1, 1).cpu()
         else:
             return torch.IntTensor([[random.randrange(num_actions)]])
 
@@ -208,13 +208,13 @@ def dqn_learing(
 
             # Compute current Q value, q_func takes only state and output value for every state-action pair
             # We choose Q based on action taken.
-            current_Q_values = Q(obs_batch).gather(1, act_batch.unsqueeze(1))
+            current_Q_values = Q(obs_batch).gather(1, act_batch.view(-1, 1))
             # Compute next Q value based on which action gives max Q values
             # Detach variable from the current graph since we don't want gradients for next Q to propagated
-            next_max_q = target_Q(next_obs_batch).detach().max(1)[0].view(-1, 1)
-            next_Q_values = not_done_mask * next_max_q
+            next_max_q = target_Q(next_obs_batch).detach().max(1, keepdim=False)[0].view(-1, 1)
+            next_Q_values = not_done_mask.view(-1, 1) * next_max_q
             # Compute the target of the current Q values
-            target_Q_values = rew_batch + (gamma * next_Q_values)
+            target_Q_values = rew_batch.view(-1, 1) + (gamma * next_Q_values)
             # Compute Bellman error
             bellman_error = target_Q_values - current_Q_values
             # clip the bellman error between [-1 , 1]
