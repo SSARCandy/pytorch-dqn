@@ -16,7 +16,7 @@ def get_env(task, seed):
     env.seed(seed)
 
     expt_dir = 'tmp/gym-results'
-    env = wrappers.Monitor(env, expt_dir, force=True)
+    env = wrappers.Monitor(env, expt_dir, force=True, video_callable=lambda episode_id: episode_id%100==0)
     env = wrap_deepmind(env)
 
     return env
@@ -26,7 +26,7 @@ def get_ram_env(env, seed):
     env.seed(seed)
 
     expt_dir = '/tmp/gym-results'
-    env = wrappers.Monitor(env, expt_dir, force=True)
+    env = wrappers.Monitor(env, expt_dir, force=True, video_callable=lambda episode_id: episode_id%100==0)
     env = wrap_deepmind_ram(env)
 
     return env
