@@ -1,3 +1,4 @@
+import argparse
 import gym
 import torch.optim as optim
 
@@ -17,7 +18,7 @@ LEARNING_RATE = 0.00025
 ALPHA = 0.95
 EPS = 0.01
 
-def main(env, num_timesteps):
+def main(env, num_timesteps, resume=False):
 
     def stopping_criterion(env):
         # notice that here t is the number of steps of the wrapped env,
@@ -36,6 +37,7 @@ def main(env, num_timesteps):
         q_func=DQN,
         optimizer_spec=optimizer_spec,
         exploration=exploration_schedule,
+        resume=resume,
         stopping_criterion=stopping_criterion,
         replay_buffer_size=REPLAY_BUFFER_SIZE,
         batch_size=BATCH_SIZE,
@@ -47,14 +49,21 @@ def main(env, num_timesteps):
     )
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--resume', help='[Boolean] resume from checkpoint')
+    args = parser.parse_args()
+    resume = True if args.resume == 'True' else False
+
+
     # Get Atari games.
+    # https://github.com/openai/gym/blob/master/gym/benchmarks/__init__.py
     benchmark = gym.benchmark_spec('Atari40M')
 
     # Change the index to select a different game.
-    task = benchmark.tasks[3]
+    task = benchmark.tasks[1]
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
 
-    main(env, task.max_timesteps)
+    main(env, task.max_timesteps, resume=resume)

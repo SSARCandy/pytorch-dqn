@@ -126,6 +126,9 @@ def dqn_learing(
     Q = q_func(input_arg, num_actions).type(dtype)
     target_Q = q_func(input_arg, num_actions).type(dtype)
 
+    trained_timesteps = 0
+    trained_episodes = 0
+
     if resume:
         cp = load_checkpoint()
         Q.load_state_dict(cp['q_state_dict'])
@@ -150,7 +153,7 @@ def dqn_learing(
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
-    for t in count():
+    for t in count(trained_timesteps):
         ### Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env):
             break
@@ -245,13 +248,13 @@ def dqn_learing(
             print("Timestep %d" % (t,))
             print("mean reward (100 episodes) %f" % mean_episode_reward)
             print("best mean reward %f" % best_mean_episode_reward)
-            print("episodes %d" % len(episode_rewards))
+            print("episodes %d" % (trained_episodes + len(episode_rewards)))
             print("exploration %f" % exploration.value(t))
             sys.stdout.flush()
 
             # save to checkpoint
             save_checkpoint({
-                'trained_episodes': len(episode_rewards),
+                'trained_episodes': trained_episodes + len(episode_rewards),
                 'timestep': t,
                 'q_state_dict': Q.state_dict(),
                 'target_state_dict': target_Q.state_dict(),
