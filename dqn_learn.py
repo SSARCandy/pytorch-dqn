@@ -16,6 +16,7 @@ import torch.autograd as autograd
 
 from utils.replay_buffer import ReplayBuffer
 from utils.my_gym import get_wrapper_by_name
+from utils.checkpoint import save_checkpoint, load_checkpoint
 
 USE_CUDA = torch.cuda.is_available()
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -43,6 +44,7 @@ def dqn_learing(
     q_func,
     optimizer_spec,
     exploration,
+    resume,
     stopping_criterion=None,
     replay_buffer_size=1000000,
     batch_size=32,
@@ -50,7 +52,7 @@ def dqn_learing(
     learning_starts=50000,
     learning_freq=4,
     frame_history_len=4,
-    target_update_freq=10000
+    target_update_freq=10000,
     ):
 
     """Run Deep Q-learning algorithm.
@@ -123,6 +125,15 @@ def dqn_learing(
     # Initialize target q function and q function
     Q = q_func(input_arg, num_actions).type(dtype)
     target_Q = q_func(input_arg, num_actions).type(dtype)
+
+    if resume:
+        cp = load_checkpoint()
+        Q.load_state_dict(cp['q_state_dict'])
+        target_Q.load_state_dict(cp['target_state_dict'])
+        trained_timesteps = cp['timestep']
+        trained_episodes = cp['trained_episodes']
+        print('checkpoint load!')
+
 
     # Construct Q network optimizer function
     optimizer = optimizer_spec.constructor(Q.parameters(), **optimizer_spec.kwargs)
@@ -237,6 +248,14 @@ def dqn_learing(
             print("episodes %d" % len(episode_rewards))
             print("exploration %f" % exploration.value(t))
             sys.stdout.flush()
+
+            # save to checkpoint
+            save_checkpoint({
+                'trained_episodes': len(episode_rewards),
+                'timestep': t,
+                'q_state_dict': Q.state_dict(),
+                'target_state_dict': target_Q.state_dict(),
+            })
 
             # Dump statistics to pickle
             with open('statistics.pkl', 'wb') as f:
