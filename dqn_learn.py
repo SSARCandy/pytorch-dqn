@@ -16,6 +16,7 @@ import torch.autograd as autograd
 
 from utils.replay_buffer import ReplayBuffer
 from utils.my_gym import get_wrapper_by_name
+from utils.checkpoint import save_checkpoint, load_checkpoint
 
 USE_CUDA = torch.cuda.is_available()
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -43,6 +44,7 @@ def dqn_learing(
     q_func,
     optimizer_spec,
     exploration,
+    resume,
     stopping_criterion=None,
     replay_buffer_size=1000000,
     batch_size=32,
@@ -50,7 +52,7 @@ def dqn_learing(
     learning_starts=50000,
     learning_freq=4,
     frame_history_len=4,
-    target_update_freq=10000
+    target_update_freq=10000,
     ):
 
     """Run Deep Q-learning algorithm.
@@ -116,13 +118,25 @@ def dqn_learing(
         if sample > eps_threshold:
             obs = torch.from_numpy(obs).type(dtype).unsqueeze(0) / 255.0
             # Use volatile = True if variable is only used in inference mode, i.e. dont save the history
-            return model(Variable(obs, volatile=True)).data.max(1)[1].view(1, 1).cpu()
+            return model(Variable(obs, volatile=True)).data.max(1)[1].view(-1, 1).cpu()
         else:
             return torch.IntTensor([[random.randrange(num_actions)]])
 
     # Initialize target q function and q function
     Q = q_func(input_arg, num_actions).type(dtype)
     target_Q = q_func(input_arg, num_actions).type(dtype)
+
+    trained_timesteps = 0
+    trained_episodes = 0
+
+    if resume:
+        cp = load_checkpoint()
+        Q.load_state_dict(cp['q_state_dict'])
+        target_Q.load_state_dict(cp['target_state_dict'])
+        trained_timesteps = cp['timestep']
+        trained_episodes = cp['trained_episodes']
+        print('checkpoint load!')
+
 
     # Construct Q network optimizer function
     optimizer = optimizer_spec.constructor(Q.parameters(), **optimizer_spec.kwargs)
@@ -139,7 +153,7 @@ def dqn_learing(
     last_obs = env.reset()
     LOG_EVERY_N_STEPS = 10000
 
-    for t in count():
+    for t in count(trained_timesteps):
         ### Check stopping criterion
         if stopping_criterion is not None and stopping_criterion(env):
             break
@@ -194,13 +208,13 @@ def dqn_learing(
 
             # Compute current Q value, q_func takes only state and output value for every state-action pair
             # We choose Q based on action taken.
-            current_Q_values = Q(obs_batch).gather(1, act_batch.unsqueeze(1))
+            current_Q_values = Q(obs_batch).gather(1, act_batch.view(-1, 1))
             # Compute next Q value based on which action gives max Q values
             # Detach variable from the current graph since we don't want gradients for next Q to propagated
-            next_max_q = target_Q(next_obs_batch).detach().max(1)[0].view(-1, 1)
-            next_Q_values = not_done_mask * next_max_q
+            next_max_q = target_Q(next_obs_batch).detach().max(1, keepdim=False)[0].view(-1, 1)
+            next_Q_values = not_done_mask.view(-1, 1) * next_max_q
             # Compute the target of the current Q values
-            target_Q_values = rew_batch + (gamma * next_Q_values)
+            target_Q_values = rew_batch.view(-1, 1) + (gamma * next_Q_values)
             # Compute Bellman error
             bellman_error = target_Q_values - current_Q_values
             # clip the bellman error between [-1 , 1]
@@ -234,9 +248,17 @@ def dqn_learing(
             print("Timestep %d" % (t,))
             print("mean reward (100 episodes) %f" % mean_episode_reward)
             print("best mean reward %f" % best_mean_episode_reward)
-            print("episodes %d" % len(episode_rewards))
+            print("episodes %d" % (trained_episodes + len(episode_rewards)))
             print("exploration %f" % exploration.value(t))
             sys.stdout.flush()
+
+            # save to checkpoint
+            save_checkpoint({
+                'trained_episodes': trained_episodes + len(episode_rewards),
+                'timestep': t,
+                'q_state_dict': Q.state_dict(),
+                'target_state_dict': target_Q.state_dict(),
+            })
 
             # Dump statistics to pickle
             with open('statistics.pkl', 'wb') as f:
