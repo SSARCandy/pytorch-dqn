@@ -44,7 +44,7 @@ def dqn_learing(
     q_func,
     optimizer_spec,
     exploration,
-    resume,
+    checkpoint_file=None,
     stopping_criterion=None,
     replay_buffer_size=1000000,
     batch_size=32,
@@ -129,13 +129,13 @@ def dqn_learing(
     trained_timesteps = 0
     trained_episodes = 0
 
-    if resume:
-        cp = load_checkpoint()
+    if checkpoint_file is not None:
+        cp = load_checkpoint(checkpoint_file)
         Q.load_state_dict(cp['q_state_dict'])
         target_Q.load_state_dict(cp['target_state_dict'])
         trained_timesteps = cp['timestep']
         trained_episodes = cp['trained_episodes']
-        print('checkpoint load!')
+        print('checkpoint %s load!' % checkpoint_file)
 
 
     # Construct Q network optimizer function
@@ -258,7 +258,7 @@ def dqn_learing(
                 'timestep': t,
                 'q_state_dict': Q.state_dict(),
                 'target_state_dict': target_Q.state_dict(),
-            })
+            }, 'timestep_%d.tar' % t)
 
             # Dump statistics to pickle
             with open('statistics.pkl', 'wb') as f:

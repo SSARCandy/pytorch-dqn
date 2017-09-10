@@ -18,7 +18,7 @@ LEARNING_RATE = 0.00025
 ALPHA = 0.95
 EPS = 0.01
 
-def main(env, num_timesteps, resume=False):
+def main(env, num_timesteps, checkpoint_file=None):
 
     def stopping_criterion(env):
         # notice that here t is the number of steps of the wrapped env,
@@ -37,7 +37,7 @@ def main(env, num_timesteps, resume=False):
         q_func=DQN,
         optimizer_spec=optimizer_spec,
         exploration=exploration_schedule,
-        resume=resume,
+        checkpoint_file=checkpoint_file,
         stopping_criterion=stopping_criterion,
         replay_buffer_size=REPLAY_BUFFER_SIZE,
         batch_size=BATCH_SIZE,
@@ -50,10 +50,8 @@ def main(env, num_timesteps, resume=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--resume', help='[Boolean] resume from checkpoint')
+    parser.add_argument('--load', help='Resume from checkpoint file')
     args = parser.parse_args()
-    resume = True if args.resume == 'True' else False
-
 
     # Get Atari games.
     # https://github.com/openai/gym/blob/master/gym/benchmarks/__init__.py
@@ -66,4 +64,4 @@ if __name__ == '__main__':
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
     env = get_env(task, seed)
 
-    main(env, task.max_timesteps, resume=resume)
+    main(env, task.max_timesteps, checkpoint_file=args.load)
