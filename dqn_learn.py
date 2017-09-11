@@ -130,7 +130,7 @@ def dqn_learing(
     trained_episodes = 0
 
     if checkpoint_file is not None:
-        cp = load_checkpoint(checkpoint_file)
+        cp = load_checkpoint(checkpoint_file, Q, target_Q)
         Q.load_state_dict(cp['q_state_dict'])
         target_Q.load_state_dict(cp['target_state_dict'])
         trained_timesteps = cp['timestep']
