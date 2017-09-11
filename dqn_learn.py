@@ -157,7 +157,7 @@ def dqn_learing(
     mean_episode_reward = -float('nan')
     best_mean_episode_reward = -float('inf')
     last_obs = env.reset()
-    LOG_EVERY_N_STEPS = 100
+    LOG_EVERY_N_STEPS = 10000
 
     for t in count(trained_timesteps):
         ### Check stopping criterion
