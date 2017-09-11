@@ -8,12 +8,14 @@ def save_checkpoint(state, filename='checkpoint.pth.tar'):
     print("Checkpoint %s" % filename)
 
 
-def load_checkpoint(filename, Q_net, target_Q_net):
+def load_checkpoint(filename):
     cp = torch.load(filename)
-    Q_dict = Q_net.state_dict()
-    target_Q_dict = target_Q_net.state_dict()
-    cp['q_state_dict'] = drop_unmatch_dict(Q_dict, cp['q_state_dict'])
-    cp['target_state_dict'] = drop_unmatch_dict(target_Q_dict, cp['target_state_dict'])
+
+    del cp['target_state_dict']['fc5.bias']
+    del cp['target_state_dict']['fc5.weight']
+    del cp['q_state_dict']['fc5.bias']
+    del cp['q_state_dict']['fc5.weight']
+
     return cp
 
 def drop_unmatch_dict(dict1, dict2):

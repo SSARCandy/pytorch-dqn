@@ -130,9 +130,15 @@ def dqn_learing(
     trained_episodes = 0
 
     if checkpoint_file is not None:
-        cp = load_checkpoint(checkpoint_file, Q, target_Q)
-        Q.load_state_dict(cp['q_state_dict'])
-        target_Q.load_state_dict(cp['target_state_dict'])
+        cp = load_checkpoint(checkpoint_file)
+        Q_dict = Q.state_dict()
+        Q_dict.update(cp['q_state_dict'])
+        Q.load_state_dict(Q_dict)
+
+        target_Q_dict = target_Q.state_dict()
+        target_Q_dict.update(cp['target_state_dict'])
+        target_Q.load_state_dict(target_Q_dict)
+
         trained_timesteps = cp['timestep']
         trained_episodes = cp['trained_episodes']
         print('checkpoint %s load!' % checkpoint_file)
@@ -151,7 +157,7 @@ def dqn_learing(
     mean_episode_reward = -float('nan')
     best_mean_episode_reward = -float('inf')
     last_obs = env.reset()
-    LOG_EVERY_N_STEPS = 10000
+    LOG_EVERY_N_STEPS = 100
 
     for t in count(trained_timesteps):
         ### Check stopping criterion
