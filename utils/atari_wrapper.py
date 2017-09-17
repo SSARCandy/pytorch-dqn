@@ -107,18 +107,18 @@ class MaxAndSkipEnv(gym.Wrapper):
 
 def _process_frame84(frame):
     img = np.reshape(frame, [210, 160, 3]).astype(np.float32)
-    img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+    # img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
     img = Image.fromarray(img)
-    resized_screen = img.resize((84, 110), Image.BILINEAR)
+    resized_screen = img.resize((84, 110, 3), Image.BILINEAR)
     resized_screen = np.array(resized_screen)
-    x_t = resized_screen[18:102, :]
-    x_t = np.reshape(x_t, [84, 84, 1])
+    x_t = resized_screen[18:102, :, :]
+    x_t = np.reshape(x_t, [84, 84, 3])
     return x_t.astype(np.uint8)
 
 class ProcessFrame84(gym.Wrapper):
     def __init__(self, env=None):
         super(ProcessFrame84, self).__init__(env)
-        self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 1))
+        self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 3))
 
     def _step(self, action):
         obs, reward, done, info = self.env.step(action)
