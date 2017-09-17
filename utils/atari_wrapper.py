@@ -6,6 +6,7 @@ from collections import deque
 import gym
 from gym import spaces
 from PIL import Image
+# import matplotlib.pyplot as plt
 
 class NoopResetEnv(gym.Wrapper):
     def __init__(self, env=None, noop_max=30):
@@ -107,13 +108,17 @@ class MaxAndSkipEnv(gym.Wrapper):
 
 def _process_frame84(frame):
     img = np.reshape(frame, [210, 160, 3]).astype(np.float32)
-    # img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
-    img = Image.fromarray(img)
-    resized_screen = img.resize((84, 110, 3), Image.BILINEAR)
-    resized_screen = np.array(resized_screen)
-    x_t = resized_screen[18:102, :, :]
-    x_t = np.reshape(x_t, [84, 84, 3])
-    return x_t.astype(np.uint8)
+    rgb_img = np.zeros((84, 84, 3))
+    for c in range(3):
+        img_c = Image.fromarray(img[:, :, c])
+        resized_screen = img_c.resize((84, 110), Image.BILINEAR)
+        resized_screen = np.array(resized_screen)
+        img_c = resized_screen[18:102, :]
+        rgb_img[:, :, c] = img_c
+
+    # plt.imshow(rgb_img.astype(np.uint8))
+    # plt.show()
+    return rgb_img.astype(np.uint8)
 
 class ProcessFrame84(gym.Wrapper):
     def __init__(self, env=None):
