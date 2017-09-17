@@ -108,17 +108,19 @@ class MaxAndSkipEnv(gym.Wrapper):
 
 def _process_frame84(frame):
     img = np.reshape(frame, [210, 160, 3]).astype(np.float32)
-    rgb_img = np.zeros((84, 84, 3))
+    img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
+
+    gray_img = np.zeros((84, 84, 3))
+    img = Image.fromarray(img)
+    resized_screen = img.resize((84, 110), Image.BILINEAR)
+    resized_screen = np.array(resized_screen)
+    img = resized_screen[18:102, :]
     for c in range(3):
-        img_c = Image.fromarray(img[:, :, c])
-        resized_screen = img_c.resize((84, 110), Image.BILINEAR)
-        resized_screen = np.array(resized_screen)
-        img_c = resized_screen[18:102, :]
-        rgb_img[:, :, c] = img_c
+        gray_img[:, :, c] = img
 
     # plt.imshow(rgb_img.astype(np.uint8))
     # plt.show()
-    return rgb_img.astype(np.uint8)
+    return gray_img.astype(np.uint8)
 
 class ProcessFrame84(gym.Wrapper):
     def __init__(self, env=None):
