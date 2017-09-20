@@ -6,7 +6,6 @@ from collections import deque
 import gym
 from gym import spaces
 from PIL import Image
-import matplotlib.pyplot as plt
 
 class NoopResetEnv(gym.Wrapper):
     def __init__(self, env=None, noop_max=30):
@@ -115,9 +114,6 @@ def _process_frame84(frame):
     x_t = resized_screen
     x_t = np.reshape(x_t, [84, 84, 1])
     x_t = np.rot90(x_t, 3)
-    print(x_t.shape)
-    plt.imshow(x_t.astype(np.uint8).reshape(84, 84))
-    plt.show()
     return x_t.astype(np.uint8)
 
 class ProcessFrame84(gym.Wrapper):
