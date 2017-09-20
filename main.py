@@ -58,7 +58,14 @@ if __name__ == '__main__':
     benchmark = gym.benchmark_spec('Atari40M')
 
     # Change the index to select a different game.
-    task = benchmark.tasks[1]
+    # 0 - BeamRiderNoFrameskip-v4
+    # 1 - BreakoutNoFrameskip-v4
+    # 2 - EnduroNoFrameskip-v4
+    # 3 - PongNoFrameskip-v4
+    # 4 - QbertNoFrameskip-v4
+    # 5 - SeaquestNoFrameskip-v4
+    # 6 - SpaceInvadersNoFrameskip-v4
+    task = benchmark.tasks[3]
 
     # Run training
     seed = 0 # Use a seed of zero (you may want to randomize the seed!)
